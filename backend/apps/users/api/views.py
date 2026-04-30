@@ -65,7 +65,6 @@ class Loginview(APIView):
 class VerifyEmail(APIView):
     
     def get(self, request, uid, token):
-        print(request.query_params) 
    
         try:
             user_id = urlsafe_base64_decode(uid).decode()
