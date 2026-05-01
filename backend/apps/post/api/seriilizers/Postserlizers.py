@@ -53,7 +53,7 @@ class PostCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Post
-        fields = ['title', 'slug', 'content', 'category', 'image', 'status']
+        fields = ["id",'title', 'slug', 'content', 'category', 'image', 'status']
 
     def validate_slug(self, value):
         if value:

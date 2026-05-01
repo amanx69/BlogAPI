@@ -8,7 +8,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django_ratelimit.decorators import ratelimit
 
+from ..premission import IsAuthorOrRedaonly ,IsOwner
+@method_decorator(ratelimit(key='user', rate='5/m', method='POST'), name='create') 
 class Postview(ModelViewSet): 
     queryset = Post.objects.all()
     serializer_class = PostCreateSerializer
@@ -60,7 +64,7 @@ class CommentViewset(ModelViewSet):
     def get_permissions(self):
         permission_map = {
         'create'  : [IsAuthenticated(),IsAuthenticated()],
-        'destroy' : [IsAuthenticated(),IsAuthenticated()],
+        'destroy' : [IsAuthenticated(),IsOwner()],
         
         }
         return permission_map.get(self.action,[IsAuthenticated()])
@@ -76,13 +80,12 @@ class CommentViewset(ModelViewSet):
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("You can only delete your own comments.")
         instance.delete() 
-    
-    
-    
-    
-    
-    
-    
-    
+    @action(detail=False,methods=["GET"],url_path="my_comment")
+    def  get_my_comment(self,request):
+        comment= Comment.objects.filter(user= request.user)
+        ser= self.get_serializer(comment,many= True)
+        return Response(ser.data)
+
+
         
    

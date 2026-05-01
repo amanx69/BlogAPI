@@ -14,9 +14,6 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-
-
-
 class Postmanager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(is_deleted= False)
@@ -52,7 +49,7 @@ class Post(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return self.title
+        return f"{self.title}by {self.user.email}"
 
 #! like model
 class Like(models.Model):
