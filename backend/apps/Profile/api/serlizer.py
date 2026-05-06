@@ -5,11 +5,11 @@ from ..models import Profile
 
 
 
-class ProfileSerlizer(serializers.ModelSerializer):
+class UpdateProfileSerlizer(serializers.ModelSerializer):
     class Meta:
         model= Profile
-        fields= ["user","username","profile_pic","bio","gender","date_of_birth","phone","country","city","address","github","twitter","linkedin","instagram"]
-        read_only_fields= ["user"]
+        fields= ["username","profile_pic","bio","gender","date_of_birth","phone","country","city","address","github","twitter","linkedin","instagram"]
+        read_only_fields= ["id","user"]
         
         
     def validate_username(self, value):
@@ -25,3 +25,18 @@ class ProfileSerlizer(serializers.ModelSerializer):
         if len(value) > 60:
             raise serializers.ValidationError("Bio must be at most 60 characters long.")
         return value
+
+
+
+class ProfileSerlizer(serializers.ModelSerializer):
+    class Meta:
+        model= Profile
+        fields= ["username","profile_pic","bio","gender","date_of_birth","phone","country","city","address","github","twitter","linkedin","instagram"]
+    
+
+
+class TragetProfileSerlizer(serializers.ModelSerializer):
+    class Meta:
+        model= Profile
+        fields= ["username","profile_pic","bio","gender","date_of_birth","country","city"]
+        read_only_fields= ["username","profile_pic","bio","gender","date_of_birth","phone","country","city"]
