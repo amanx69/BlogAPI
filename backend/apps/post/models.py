@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
@@ -37,6 +39,7 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
+    published_at= models.DateTimeField(blank=True, null=True)
     
     objects= Postmanager()
     all_objects= models.Manager()
@@ -50,6 +53,11 @@ class Post(models.Model):
     
     def __str__(self):
         return f"{self.title}by {self.user.email}"
+    
+    def publish(self):
+        self.status = self.STATUS_CHOICES[1][0]  # Set status to 'published'
+        self.published_at = datetime.datetime.now()  # Set published_at to current time
+        self.save(update_fields=['status', 'published_at'])
 
 #! like model
 class Like(models.Model):
@@ -79,6 +87,6 @@ class Comment(models.Model):
     
     def __str__(self):
         return f"comment by{self.user.email} on {self.post.title}"
-    class Mata:
+    class Meta:
         ordering = ['-created_at']
     

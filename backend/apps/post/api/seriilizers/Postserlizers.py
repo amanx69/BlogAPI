@@ -1,5 +1,32 @@
 from rest_framework import serializers
 from ...models import Post ,Category
+class PostListSerializer(serializers.ModelSerializer):
+    author = serializers.EmailField(source='user.email', read_only=True)
+    author_id = serializers.IntegerField(source='user.id', read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Post
+        fields = [
+            'id', 'title', 'slug', 'content', 'category', 'image', 
+            'status', 'author', 'author_id', 'likes_count', 
+            'comments_count', 'is_liked', 'created_at', 'published_at'
+        ]
+
+    def get_likes_count(self, obj):
+        return obj.post_like.count()
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
+
+    def get_is_liked(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.post_like.filter(user=request.user).exists()
+        return False
+
 class PostCreateSerializer(serializers.ModelSerializer):
     title = serializers.CharField(
 
@@ -80,23 +107,19 @@ class PostCreateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     f'Title cannot contain the word "{word}".'
                 )
-    
         words = value.split()
         if len(words) < 3:
             raise serializers.ValidationError(
                 'Title must contain at least 3 words.'
             )
-        
         return value
     def validate_content(self, value):
-  
         if len(value) < 30:
             raise serializers.ValidationError(
                 'Content must be at least 50 characters.'
             )
  
    
-        
         return value
     
   
@@ -123,8 +146,7 @@ class PostCreateSerializer(serializers.ModelSerializer):
         
         if status == 'published':
             # Check if user has complete profile
-            if not hasattr(user, 'is_verified') or not user.is_verified:
-             
+            if not hasattr(user, 'is_verify') or not user.is_verify:
                  raise serializers.ValidationError({
                      'status': 'You must verify your email before publishing.'
                  })
@@ -144,3 +166,12 @@ class PostCreateSerializer(serializers.ModelSerializer):
             attrs['slug'] = slug
         
         return attrs
+
+
+
+
+class PostDetailSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Post
+        fields = ["id",'title', 'slug', 'content', 'category', 'image', 'status','created_at']
