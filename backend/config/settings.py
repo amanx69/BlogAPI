@@ -43,13 +43,16 @@ INSTALLED_APPS = [
     #! my apps
     "apps.users",
     "apps.Profile",
-    "apps.post"
+    "apps.post",
+    'corsheaders'
 ]
 AUTH_USER_MODEL= "users.User"
+CORS_ALLOW_ALL_ORIGINS = True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -130,7 +133,13 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+       'DEFAULT_THROTTLE_RATES': {
+        'anon': '20/hour',
+        'user': '100/hour',
+    },
+       'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
     
 }
 
@@ -183,6 +192,16 @@ from datetime import timedelta
 ...
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=2),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12), #TODO change it 
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1", 
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
 }
