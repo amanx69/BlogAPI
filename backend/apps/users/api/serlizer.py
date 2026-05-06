@@ -27,9 +27,9 @@ class SignupSerlizer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         #! send verifiction email
         uid ,token =generate_verification_token(user)
-        
+        #! send email verifiction link to user email
+        signup_verifiction.send_verifiction_link.delay(user.email,uid,token) 
         print(f"{uid}/{token}")
-        signup_verifiction.send_verifiction_link.delay(user.email,uid,token)
         
         return user
  

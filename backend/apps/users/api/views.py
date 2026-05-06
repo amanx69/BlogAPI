@@ -42,25 +42,20 @@ class Loginview(APIView):
     
     @method_decorator(ratelimit(key="ip",rate="3/m",block=True,method="POST"))
     def post(self,request):
-        try:
-            ser=Loginserlizer(data=request.data)
-            print(request.data)
-            ser.is_valid(raise_exception=True)
-            user= ser.validated_data['user']
-            print(user)
-            token=get_token(user)
-            return Response({
-                "massgae":"Login done",
-                "token":token,
-                "user":{
-                    "email":user.email,
-                    "id":user.id
-                }
-            },status.HTTP_200_OK)
-            
-        except :
-            return Response(f"error{ser.errors}")
-        
+        ser=Loginserlizer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        user= ser.validated_data['user']
+        print(user)
+        token=get_token(user)
+        return Response({
+            "message":"Login done",
+            "refresh":token['refresh'],
+            "access":token['access'],
+            "user":{
+                "email":user.email,
+                "id":user.id
+            }
+        },status.HTTP_200_OK)
 #! verify email
 class VerifyEmail(APIView):
     
@@ -68,7 +63,7 @@ class VerifyEmail(APIView):
    
         try:
             user_id = urlsafe_base64_decode(uid).decode()
-        except Exception as e:
+        except Exception:
             return Response({"error": "Invalid UID"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -104,7 +99,7 @@ class VerifyEmail(APIView):
             return Response({
                 "message": "Email verified successfully",
                 "token": new_token
-            })
+            },status=status.HTTP_200_OK)
         else:
             return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -115,22 +110,26 @@ class ResendVerificationView(APIView):
     def post(self, request):
         email = request.data.get('email')
         if not email:
-            return Response({"error":"email are required"})
+            return Response({"error":"email are required"}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({'message': "email not found"})
+            return Response({'message': "email not found"},status=status.HTTP_404_NOT_FOUND)
         
         if  user.is_verify:
-            return Response({'message': 'Email already verified.'})
+            return Response({'message': 'Email already verified.'}, status=status.HTTP_400_BAD_REQUEST)
         
 
         uid, token= generate_verification_token(user)
         signup_verifiction.send_verifiction_link.delay(user.email,uid,token)
         
         
-        return Response({'message': 'Verification email sent.'})
+        return Response({
+            #TODO for testing purpose we are sending uid and token in response but in production we should not send it in response
+            "uid": uid,
+            "token": token,
+            'message': 'Verification email sent.'}, status=status.HTTP_200_OK)
 
 
 
