@@ -80,7 +80,7 @@ def get_target_profile(request,user_id):
    
 #! updae profile
 
-@method_decorator(ratelimit(key='user', rate='3/h', block=True), name='dispatch')
+
 class UpdateProfile(UpdateAPIView):
     queryset= Profile.objects.all()
     serializer_class= UpdateProfileSerlizer
