@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from ...models import Post ,Category
 class PostListSerializer(serializers.ModelSerializer):
-    author = serializers.EmailField(source='user.email', read_only=True)
+    author = serializers.CharField(source='user.profile.username', read_only=True)
     author_id = serializers.IntegerField(source='user.id', read_only=True)
+    author_profile_pic = serializers.SerializerMethodField()
     likes_count = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
@@ -10,18 +11,31 @@ class PostListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = [
-            'id', 'title', 'slug', 'content', 'category', 'image', 
-            'status', 'author', 'author_id', 'likes_count', 
+            'id', 'title', 'content', 'category', 'image', 
+            'status', 'author', 'author_id', 'author_profile_pic', 'likes_count', 
             'comments_count', 'is_liked', 'created_at', 'published_at'
         ]
 
+    def get_author_profile_pic(self, obj):
+        request = self.context.get('request')
+        if hasattr(obj.user, 'profile') and obj.user.profile.profile_pic:
+            url = obj.user.profile.profile_pic.url
+            if request:
+                return request.build_absolute_uri(url)
+            return url
+        return None
+
     def get_likes_count(self, obj):
-        return obj.post_like.count()
+        return getattr(obj, 'annotated_likes_count', obj.post_like.count())
 
     def get_comments_count(self, obj):
-        return obj.comments.count()
+        return getattr(obj, 'annotated_comments_count', obj.comments.count()) 
 
     def get_is_liked(self, obj):
+        # Use the annotated field if available (from list view)
+        if hasattr(obj, 'is_liked_by_user'):
+            return obj.is_liked_by_user
+        
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             return obj.post_like.filter(user=request.user).exists()
@@ -116,7 +130,7 @@ class PostCreateSerializer(serializers.ModelSerializer):
     def validate_content(self, value):
         if len(value) < 30:
             raise serializers.ValidationError(
-                'Content must be at least 50 characters.'
+                'Content must be greater than 30 words .'
             )
  
    
@@ -168,7 +182,7 @@ class PostCreateSerializer(serializers.ModelSerializer):
         return attrs
 
 
-
+ 
 
 class PostDetailSerializer(serializers.ModelSerializer):
     
